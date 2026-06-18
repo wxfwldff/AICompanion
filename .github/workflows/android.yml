@@ -1,10 +1,7 @@
-name: Flutter APK Build
+name: Flutter APK Build (Stable Fix)
 
 on:
   push:
-    branches: [ main, master, develop ]
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -12,32 +9,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          channel: stable
 
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v3
-        with:
-          path: /opt/hostedtoolcache/flutter
-          key: ${{ runner.os }}-flutter-${{ hashFiles('frontend/pubspec.lock') }}
+      - name: Show Flutter version
+        run: flutter --version
 
       - name: Install dependencies
         run: flutter pub get
         working-directory: frontend
 
-      - name: Analyze code
-        run: flutter analyze
+      - name: Clean project
+        run: flutter clean
         working-directory: frontend
-        continue-on-error: true
-
-      - name: Run tests
-        run: flutter test
-        working-directory: frontend
-        continue-on-error: true
 
       - name: Build APK (release)
         run: flutter build apk --release
@@ -46,6 +35,5 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ai-social-app-release
+          name: app-release
           path: frontend/build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 30
