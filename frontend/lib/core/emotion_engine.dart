@@ -10,6 +10,8 @@ class EmotionModel {
   int coldness = 0;
   int missing = 10;
 
+  EmotionModel();
+
   // ---------------------- 事件更新 ----------------------
   void update(String event) {
     switch (event) {
