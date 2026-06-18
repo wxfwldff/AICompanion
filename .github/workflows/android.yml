@@ -1,4 +1,4 @@
-name: Flutter APK Build (Stable Fix)
+name: Flutter APK Build (Stable Ultimate Fix)
 
 on:
   push:
@@ -9,31 +9,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # 1. 拉代码
+      - name: Checkout
         uses: actions/checkout@v4
 
+      # 2. Java环境（🔥关键，否则Android必炸）
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # 3. Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - name: Show Flutter version
-        run: flutter --version
+      # 4. 显示版本
+      - run: flutter --version
 
+      # 5. 进入 Flutter 项目（自动判断）
+      - name: Detect Flutter project path
+        run: |
+          if [ -f pubspec.yaml ]; then
+            echo "ROOT=." >> $GITHUB_ENV
+          elif [ -f frontend/pubspec.yaml ]; then
+            echo "ROOT=frontend" >> $GITHUB_ENV
+          else
+            echo "ERROR: No Flutter project found"
+            exit 1
+          fi
+
+      # 6. 安装依赖
       - name: Install dependencies
         run: flutter pub get
-        working-directory: frontend
+        working-directory: ${{ env.ROOT }}
 
-      - name: Clean project
+      # 7. 清理
+      - name: Clean
         run: flutter clean
-        working-directory: frontend
+        working-directory: ${{ env.ROOT }}
 
-      - name: Build APK (release)
+      # 8. 编译APK
+      - name: Build APK
         run: flutter build apk --release
-        working-directory: frontend
+        working-directory: ${{ env.ROOT }}
 
-      - name: Upload APK artifact
+      # 9. 上传APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: frontend/build/app/outputs/flutter-apk/app-release.apk
+          path: ${{ env.ROOT }}/build/app/outputs/flutter-apk/app-release.apk
