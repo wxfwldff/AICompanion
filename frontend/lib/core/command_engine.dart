@@ -338,4 +338,6 @@ class CommandEngine {
     } catch (_) {}
     return null;
   }
+
+}
 }
