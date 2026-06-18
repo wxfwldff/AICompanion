@@ -1,0 +1,25 @@
+# Flutter
+frontend/.dart_tool/
+frontend/.packages
+frontend/.pub/
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.metadata
+frontend/pubspec.lock
+
+# Android
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/app/build/
+*.iml
+*.ipr
+*.iws
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
