@@ -1,104 +1,245 @@
 import 'package:flutter/material.dart';
+import '../core/moments_engine.dart';
+import '../models/moment_model.dart';
 
-class MomentsPagePlaceholder extends StatelessWidget {
-  const MomentsPagePlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('朋友圈')),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('📝', style: TextStyle(fontSize: 64)),
-            SizedBox(height: 16),
-            Text('还没有朋友圈动态', style: TextStyle(fontSize: 16, color: Colors.grey)),
-            SizedBox(height: 8),
-            Text('聊天或等待一段时间后会自动生成', style: TextStyle(fontSize: 13, color: Colors.grey)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
+/// 朋友圈页面 —— 按时间倒序展示AI角色的动态
 class MomentsPage extends StatefulWidget {
-  const MomentsPage({super.key});
+  final String characterName;
+  final String characterEmoji;
+
+  const MomentsPage({
+    super.key,
+    required this.characterName,
+    this.characterEmoji = '🤖',
+  });
 
   @override
   State<MomentsPage> createState() => _MomentsPageState();
 }
 
 class _MomentsPageState extends State<MomentsPage> {
-  // Mock朋友圈数据
-  final List<Map<String, dynamic>> _moments = [
-    {'name': '小晴', 'emoji': '🌸', 'content': '今天心情很好 ☀️', 'time': '5分钟前', 'emotion': '😊', 'likes': 3, 'comments': '小雪: 真好~'},
-    {'name': '阿杰', 'emoji': '🌊', 'content': '有些人好像更重要呢', 'time': '30分钟前', 'emotion': '😒', 'likes': 1, 'comments': ''},
-    {'name': '小雪', 'emoji': '❄️', 'content': '今天有点安静...', 'time': '1小时前', 'emotion': '😔', 'likes': 5, 'comments': '小晴: 我在呢\n阿龙: +1'},
-  ];
+  List<Moment> _moments = [];
+  bool _loading = true;
+
+  String get _characterId => widget.characterName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMoments();
+  }
+
+  Future<void> _loadMoments() async {
+    final list = await MomentsEngine.getMoments(_characterId);
+    if (!mounted) return;
+    setState(() {
+      _moments = list;
+      _loading = false;
+    });
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _loading = true);
+    await _loadMoments();
+  }
+
+  String _formatTime(int timestamp) {
+    final dt = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+
+    if (diff.inMinutes < 1) return '刚刚';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}分钟前';
+    if (diff.inHours < 24) return '${diff.inHours}小时前';
+    if (diff.inDays < 7) return '${diff.inDays}天前';
+    return '${dt.month}/${dt.day}';
+  }
+
+  IconData _emotionIcon(String state) {
+    switch (state) {
+      case '吃醋':
+        return Icons.sentiment_dissatisfied;
+      case '喜欢':
+        return Icons.favorite;
+      case '冷淡':
+        return Icons.ac_unit;
+      case '依赖':
+        return Icons.link;
+      case '想你':
+        return Icons.nightlight_round;
+      default:
+        return Icons.sentiment_satisfied;
+    }
+  }
+
+  Color _emotionColor(String state) {
+    switch (state) {
+      case '吃醋':
+        return Colors.purpleAccent;
+      case '喜欢':
+        return Colors.pinkAccent;
+      case '冷淡':
+        return Colors.blueGrey;
+      case '依赖':
+        return Colors.orangeAccent;
+      case '想你':
+        return Colors.indigoAccent;
+      default:
+        return Colors.white54;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('朋友圈')),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _moments.length,
-        itemBuilder: (context, index) {
-          final m = _moments[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: const Color(0xFF0B0B0F),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0B0B0F),
+        title: Text(
+          '${widget.characterEmoji} ${widget.characterName} 的动态',
+          style: const TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white54))
+          : _moments.isEmpty
+              ? const Center(
+                  child: Text(
+                    '还没有动态\n等AI发一条吧',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white38, fontSize: 15),
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _refresh,
+                  color: Colors.blueAccent,
+                  backgroundColor: const Color(0xFF1A1A24),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: _moments.length,
+                    itemBuilder: (context, index) {
+                      final moment = _moments[index];
+                      return _momentCard(moment);
+                    },
+                  ),
+                ),
+    );
+  }
+
+  Widget _momentCard(Moment moment) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 头部：头像+角色名+时间
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.blue.shade100,
-                        child: Text(m['emoji'], style: const TextStyle(fontSize: 20)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(m['name'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                            Text(m['time'], style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                          ],
-                        ),
-                      ),
-                      Text(m['emotion'], style: const TextStyle(fontSize: 20)),
-                    ],
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    child: Text(
+                      widget.characterEmoji,
+                      style: const TextStyle(fontSize: 20),
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(m['content'], style: const TextStyle(fontSize: 16)),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(Icons.favorite_border, size: 18, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text('${m['likes']}', style: const TextStyle(fontSize: 13)),
-                      const SizedBox(width: 16),
-                      const Icon(Icons.comment_outlined, size: 18, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text('${m['comments'].toString().split('\n').length}', style: const TextStyle(fontSize: 13)),
-                    ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      widget.characterName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
-                  if (m['comments'].toString().isNotEmpty) ...[
-                    const Divider(),
-                    ...(m['comments'] as String).split('\n').map((c) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(c, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
-                    )),
-                  ],
+                  Text(
+                    _formatTime(moment.timestamp),
+                    style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
+                  ),
                 ],
               ),
-            ),
-          );
-        },
+              const SizedBox(height: 10),
+              // 正文
+              Text(
+                moment.text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  height: 1.4,
+                ),
+              ),
+              // 图片占位（预留）
+              if (moment.imageUrl != null) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    moment.imageUrl!,
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 160,
+                        color: Colors.white.withOpacity(0.04),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            color: Colors.white24,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 160,
+                        color: Colors.white.withOpacity(0.04),
+                        child: Center(
+                          child: Icon(Icons.broken_image_outlined, color: Colors.white24, size: 40),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              // 情绪标签
+              Row(
+                children: [
+                  Icon(
+                    _emotionIcon(moment.emotionState),
+                    size: 14,
+                    color: _emotionColor(moment.emotionState),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    moment.emotionState,
+                    style: TextStyle(
+                      color: _emotionColor(moment.emotionState),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
