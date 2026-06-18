@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import 'dart:ui' show VoidCallback;
 // ============ TTS Provider 枚举 ============
 enum TTSProvider { edge, azure, volcengine, openai }
 
@@ -54,6 +54,13 @@ class TTSEngine {
 
     final style = TTSEngine.emotionToVoiceStyle(emotions);
     onPlay?.call(text, style);
+  }
+
+  /// 便捷 speak 方法（用于 chat_page 直接朗读文本）
+  void speak(String text) {
+    if (_isPlaying) stopTTS();
+    _isPlaying = true;
+    onPlay?.call(text, VoiceStyle.normal);
   }
 
   /// 停止播放

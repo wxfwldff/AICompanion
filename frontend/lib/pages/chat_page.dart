@@ -81,7 +81,7 @@ class _ChatPageState extends State<ChatPage> {
         _proactiveEngine = ProactiveChatEngine(
           characterId: _characterId,
           emotion: _emotion,
-          onAiMessage: (message, context) {
+          onAiMessage: ({required String message, required Map<String, dynamic>? context}) {
             if (!mounted) return;
             _receiveAiMessage(message);
           },

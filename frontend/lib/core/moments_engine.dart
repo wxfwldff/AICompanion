@@ -69,12 +69,12 @@ class MomentsEngine {
     final stateLabel = emotion.moodLabel;
 
     // 情绪 → 图片
-    final emotionMap = {
-      'love': emotion.love,
-      'jealousy': emotion.jealousy,
-      'dependency': emotion.dependency,
-      'coldness': emotion.coldness,
-      'missing': emotion.missing,
+    final Map<String, double> emotionMap = {
+      'love': emotion.love.toDouble(),
+      'jealousy': emotion.jealousy.toDouble(),
+      'dependency': emotion.dependency.toDouble(),
+      'coldness': emotion.coldness.toDouble(),
+      'missing': emotion.missing.toDouble(),
     };
     final imageUrl = _imageEngine.getImageUrlForEmotion(emotionMap);
 

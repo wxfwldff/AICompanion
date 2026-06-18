@@ -29,11 +29,10 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadStats() async {
     final db = await MemoryDB.instance;
-    final emotions = EmotionDB();
     for (final c in _characters) {
       final name = c['name']!;
       final count = await db.getMessageCount(name);
-      final emo = await emotions.load(name);
+      final emo = await EmotionDB.load(name);
       _chatCounts[name] = count;
       if (emo != null) {
         _charEmotions[name] = emo.moodLabel;

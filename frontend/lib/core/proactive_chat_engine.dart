@@ -49,7 +49,7 @@ class ProactiveChatEngine {
     final trigger = evaluateTriggers();
     if (trigger == null) return;
 
-    final (message, context) = generateChatMessage(trigger);
+    final (:message, :context) = generateChatMessage(trigger);
     if (message.isNotEmpty) {
       onAiMessage(message: message, context: context);
     }

@@ -87,6 +87,16 @@ class UIController {
   void toggleProactive() =>
       proactiveEnabledState.value = !proactiveEnabledState.value;
 
+  void enableTTS() => ttsEnabledState.value = true;
+  void disableTTS() => ttsEnabledState.value = false;
+  void enableEmotion() => emotionEnabledState.value = true;
+  void disableEmotion() => emotionEnabledState.value = false;
+  void enableMoments() => momentsEnabledState.value = true;
+  void disableMoments() => momentsEnabledState.value = false;
+  void enableProactive() => proactiveEnabledState.value = true;
+  void disableProactive() => proactiveEnabledState.value = false;
+
+
   // ---------- 动态组件管理 ----------
   void addButton(DynamicUIButton btn) {
     final list = List<DynamicUIButton>.from(dynamicButtons.value);
