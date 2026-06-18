@@ -8,6 +8,7 @@ import '../core/tts_engine.dart';
 import '../core/command_engine.dart';
 import '../core/ui_controller.dart';
 import '../core/mode_manager.dart';
+import '../core/memory/memory_router.dart';
 import '../core/ai_router.dart';
 
 class ChatPage extends StatefulWidget {
@@ -98,7 +99,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _loadHistory() async {
-    final rows = await MemoryDB.getMessages(_characterId);
+    final rows = await MemoryRouter.readHistory(characterId: _characterId);
     final emotion = await EmotionDB.load(_characterId);
     if (!mounted) return;
     setState(() {
@@ -119,7 +120,7 @@ class _ChatPageState extends State<ChatPage> {
       messages.add({"role": "user", "text": text});
       _isThinking = true;
     });
-    MemoryDB.insertMessage(_characterId, "user", text);
+    MemoryRouter.writeMessage(characterId: _characterId, role: "user", content: text);
 
     // 陪伴模式下更新情绪
     if (_modeMgr.isCompanion) {
@@ -152,7 +153,7 @@ class _ChatPageState extends State<ChatPage> {
         });
       });
 
-      MemoryDB.insertMessage(_characterId, "ai", reply);
+      MemoryRouter.writeMessage(characterId: _characterId, role: "ai", content: reply);
 
       // 陪伴模式下保存情绪状态并可能触发朋友圈
       if (_modeMgr.isCompanion) {
@@ -176,7 +177,7 @@ class _ChatPageState extends State<ChatPage> {
         "text": message,
       });
     });
-    MemoryDB.insertMessage(_characterId, "ai", message);
+    MemoryRouter.writeMessage(characterId: _characterId, role: "ai", content: message);
   }
 
   void _autoScroll() {
